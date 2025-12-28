@@ -23,7 +23,7 @@ RUN apt-get update || true && \
     pkg-config \
     python3-dev \
     libffi-dev \
-    libgdk-pixbuf2.0-0 \
+    libgdk-pixbuf2.0-common \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \
     shared-mime-info \
