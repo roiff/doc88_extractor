@@ -10,27 +10,27 @@ WORKDIR /app
 
 # 安装系统依赖、Java和中文字体
 
-RUN apt-get update && apt-get install -y   
-wget   
-curl   
-git   
-openjdk-17-jdk   
-libcairo2   
-libcairo2-dev   
-pkg-config   
-python3-dev   
-libffi-dev   
-libgdk-pixbuf2.0-0   
-libpango-1.0-0   
-libpangocairo-1.0-0   
-shared-mime-info   
-fontconfig   
-fonts-noto-cjk   
-fonts-noto-cjk-extra   
-fonts-wqy-microhei   
-fonts-wqy-zenhei   
-&& fc-cache -fv   
-&& rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y \
+    wget \
+    curl \
+    git \
+    openjdk-17-jdk \
+    libcairo2 \
+    libcairo2-dev \
+    pkg-config \
+    python3-dev \
+    libffi-dev \
+    libgdk-pixbuf2.0-0 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    shared-mime-info \
+    fontconfig \
+    fonts-noto-cjk \
+    fonts-noto-cjk-extra \
+    fonts-wqy-microhei \
+    fonts-wqy-zenhei \
+    && fc-cache -fv \
+    && rm -rf /var/lib/apt/lists/*
 
 # 设置Java环境变量
 
