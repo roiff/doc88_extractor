@@ -13,35 +13,124 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f5f5f5;
             min-height: 100vh;
             display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
         }
         
-        .container {
+        /* 侧边栏 */
+        .sidebar {
+            width: 320px;
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            padding: 40px;
-            max-width: 600px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .sidebar-header h1 {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        
+        .sidebar-header p {
+            font-size: 12px;
+            opacity: 0.9;
+        }
+        
+        .search-box {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        .search-box input {
             width: 100%;
-        }
-        
-        h1 {
-            color: #333;
-            text-align: center;
-            margin-bottom: 10px;
-            font-size: 28px;
-        }
-        
-        .subtitle {
-            text-align: center;
-            color: #666;
-            margin-bottom: 30px;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
             font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .file-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .file-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+        }
+        
+        .file-item:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+        }
+        
+        .file-item.active {
+            background: #e7f3ff;
+            border-color: #667eea;
+        }
+        
+        .file-item-name {
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 5px;
+            word-break: break-all;
+        }
+        
+        .file-item-meta {
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .file-item-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+        
+        /* 主内容区 */
+        .main-content {
+            margin-left: 320px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        .content-header {
+            background: white;
+            padding: 20px 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .content-header h2 {
+            color: #333;
+            margin-bottom: 15px;
         }
         
         .input-group {
@@ -70,8 +159,7 @@
         }
         
         button {
-            width: 100%;
-            padding: 14px;
+            padding: 12px 24px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
@@ -93,7 +181,7 @@
         }
         
         .status-box {
-            margin-top: 30px;
+            margin-top: 20px;
             padding: 20px;
             background: #f5f5f5;
             border-radius: 10px;
@@ -176,31 +264,147 @@
         .example strong {
             color: #333;
         }
+        
+        /* PDF预览区 */
+        .pdf-viewer {
+            flex: 1;
+            background: white;
+            margin: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .pdf-viewer.active {
+            display: flex;
+        }
+        
+        .pdf-viewer-header {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .pdf-viewer-title {
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .pdf-viewer-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+        }
+        
+        .btn-secondary:hover:not(:disabled) {
+            background: #5a6268;
+        }
+        
+        .pdf-viewer-content {
+            flex: 1;
+            overflow: auto;
+            padding: 20px;
+        }
+        
+        .pdf-viewer-content iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            min-height: 600px;
+        }
+        
+        .pdf-viewer-empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+            font-size: 16px;
+        }
+        
+        .content-body {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📄 DOC88 文档提取工具</h1>
-        <p class="subtitle">输入文档链接，自动提取并转换为PDF</p>
+    <!-- 侧边栏 -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h1>📄 DOC88 文档提取工具</h1>
+            <p>历史文件列表</p>
+        </div>
         
-        <form id="submitForm">
-            <div class="input-group">
-                <label for="url">文档链接：</label>
-                <input type="text" id="url" name="url" placeholder="https://www.doc88.com/p-xxxxx.html" required>
-                <div class="example">
-                    <strong>示例：</strong>https://www.doc88.com/p-7065033333115.html
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="搜索文件...">
+        </div>
+        
+        <div class="file-list" id="fileList">
+            <div class="file-item-empty">加载中...</div>
+        </div>
+    </div>
+    
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <div class="content-header">
+            <h2>新建任务</h2>
+            
+            <form id="submitForm">
+                <div class="input-group">
+                    <label for="url">文档链接：</label>
+                    <input type="text" id="url" name="url" placeholder="https://www.doc88.com/p-xxxxx.html" required>
+                    <div class="example">
+                        <strong>示例：</strong>https://www.doc88.com/p-7065033333115.html
+                    </div>
+                </div>
+                
+                <button type="submit" id="submitBtn">开始处理</button>
+            </form>
+            
+            <div class="status-box" id="statusBox">
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="status-message" id="statusMessage"></div>
+                <button class="download-btn" id="downloadBtn">下载PDF</button>
+            </div>
+        </div>
+        
+        <div class="content-body">
+            <!-- PDF预览区 -->
+            <div class="pdf-viewer" id="pdfViewer">
+                <div class="pdf-viewer-header">
+                    <div class="pdf-viewer-title" id="pdfViewerTitle">PDF预览</div>
+                    <div class="pdf-viewer-actions">
+                        <button class="btn-secondary" id="pdfDownloadBtn">下载</button>
+                        <button class="btn-secondary" onclick="closePdfViewer()">关闭</button>
+                    </div>
+                </div>
+                <div class="pdf-viewer-content" id="pdfViewerContent">
+                    <div class="pdf-viewer-empty">请从左侧选择文件进行预览</div>
                 </div>
             </div>
-            
-            <button type="submit" id="submitBtn">开始处理</button>
-        </form>
-        
-        <div class="status-box" id="statusBox">
-            <div class="progress-bar" id="progressBar">
-                <div class="progress-fill" id="progressFill"></div>
-            </div>
-            <div class="status-message" id="statusMessage"></div>
-            <button class="download-btn" id="downloadBtn">下载PDF</button>
         </div>
     </div>
     
@@ -212,10 +416,105 @@
         const statusMessage = document.getElementById('statusMessage');
         const progressFill = document.getElementById('progressFill');
         const downloadBtn = document.getElementById('downloadBtn');
+        const fileList = document.getElementById('fileList');
+        const searchInput = document.getElementById('searchInput');
+        const pdfViewer = document.getElementById('pdfViewer');
+        const pdfViewerTitle = document.getElementById('pdfViewerTitle');
+        const pdfViewerContent = document.getElementById('pdfViewerContent');
+        const pdfDownloadBtn = document.getElementById('pdfDownloadBtn');
         
         let currentTaskId = null;
         let statusCheckInterval = null;
+        let allFiles = [];
+        let currentPdfFile = null;
         
+        // 加载文件列表
+        async function loadFiles() {
+            try {
+                const response = await fetch('/api/files');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    allFiles = data.files || [];
+                    renderFiles(allFiles);
+                } else {
+                    fileList.innerHTML = '<div class="file-item-empty">加载失败: ' + (data.error || '未知错误') + '</div>';
+                }
+            } catch (error) {
+                fileList.innerHTML = '<div class="file-item-empty">加载失败: ' + error.message + '</div>';
+            }
+        }
+        
+        // 渲染文件列表
+        function renderFiles(files) {
+            if (files.length === 0) {
+                fileList.innerHTML = '<div class="file-item-empty">暂无文件</div>';
+                return;
+            }
+            
+            fileList.innerHTML = files.map((file, index) => {
+                const size = formatFileSize(file.size);
+                return `
+                    <div class="file-item" data-filename="${file.path}" onclick="openPdf('${file.path}', '${file.name.replace(/'/g, "\\'")}')">
+                        <div class="file-item-name">${file.name}</div>
+                        <div class="file-item-meta">
+                            <span>${file.modified_str}</span>
+                            <span>${size}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+        
+        // 打开PDF预览
+        function openPdf(filename, name) {
+            currentPdfFile = filename;
+            pdfViewerTitle.textContent = name;
+            pdfViewerContent.innerHTML = `<iframe src="/api/file/${encodeURIComponent(filename)}"></iframe>`;
+            pdfViewer.classList.add('active');
+            
+            // 更新活动状态
+            document.querySelectorAll('.file-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`[data-filename="${filename}"]`)?.classList.add('active');
+        }
+        
+        // 关闭PDF预览
+        function closePdfViewer() {
+            pdfViewer.classList.remove('active');
+            currentPdfFile = null;
+            document.querySelectorAll('.file-item').forEach(item => {
+                item.classList.remove('active');
+            });
+        }
+        
+        // 下载PDF
+        pdfDownloadBtn.addEventListener('click', () => {
+            if (currentPdfFile) {
+                window.location.href = `/api/file/${encodeURIComponent(currentPdfFile)}/download`;
+            }
+        });
+        
+        // 搜索功能
+        searchInput.addEventListener('input', (e) => {
+            const keyword = e.target.value.toLowerCase();
+            const filtered = allFiles.filter(file => 
+                file.name.toLowerCase().includes(keyword)
+            );
+            renderFiles(filtered);
+        });
+        
+        // 提交表单
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             
@@ -292,6 +591,8 @@
                             urlInput.disabled = false;
                             submitBtn.disabled = false;
                             submitBtn.textContent = '开始处理';
+                            // 重新加载文件列表
+                            loadFiles();
                         }
                     }
                     
@@ -335,7 +636,9 @@
                 window.location.href = `/api/download/${currentTaskId}`;
             }
         });
+        
+        // 页面加载时加载文件列表
+        loadFiles();
     </script>
 </body>
 </html>
-

@@ -164,6 +164,80 @@ def download(task_id):
         download_name=task["pdf_name"]
     )
 
+@app.route('/api/files')
+def list_files():
+    """获取历史文件列表"""
+    try:
+        files = []
+        docs_dir = ospath(cfg2.o_dir_path)
+        
+        if os.path.exists(docs_dir):
+            for item in os.listdir(docs_dir):
+                item_path = os.path.join(docs_dir, item)
+                # 检查是否是PDF文件
+                if os.path.isfile(item_path) and item.endswith('.pdf'):
+                    file_stat = os.stat(item_path)
+                    files.append({
+                        "name": item,
+                        "path": item,
+                        "size": file_stat.st_size,
+                        "modified": file_stat.st_mtime,
+                        "modified_str": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(file_stat.st_mtime))
+                    })
+        
+        # 按修改时间倒序排列
+        files.sort(key=lambda x: x["modified"], reverse=True)
+        return jsonify({"files": files})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/file/<path:filename>')
+def get_file(filename):
+    """获取PDF文件（用于预览和下载）"""
+    try:
+        # 安全检查，防止路径遍历攻击
+        if '..' in filename or filename.startswith('/'):
+            return jsonify({"error": "无效的文件名"}), 400
+        
+        file_path = os.path.join(ospath(cfg2.o_dir_path), filename)
+        if not os.path.exists(file_path):
+            return jsonify({"error": "文件不存在"}), 404
+        
+        # 检查是否是PDF文件
+        if not filename.endswith('.pdf'):
+            return jsonify({"error": "只能访问PDF文件"}), 400
+        
+        return send_file(
+            ospath(file_path),
+            mimetype='application/pdf',
+            as_attachment=False
+        )
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/file/<path:filename>/download')
+def download_file(filename):
+    """下载PDF文件"""
+    try:
+        # 安全检查
+        if '..' in filename or filename.startswith('/'):
+            return jsonify({"error": "无效的文件名"}), 400
+        
+        file_path = os.path.join(ospath(cfg2.o_dir_path), filename)
+        if not os.path.exists(file_path):
+            return jsonify({"error": "文件不存在"}), 404
+        
+        if not filename.endswith('.pdf'):
+            return jsonify({"error": "只能下载PDF文件"}), 400
+        
+        return send_file(
+            ospath(file_path),
+            as_attachment=True,
+            download_name=filename
+        )
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == '__main__':
     # 初始化检查
     from updater import Update
