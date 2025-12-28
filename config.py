@@ -18,7 +18,7 @@ class Config:
             "get_more": False,
             "path_replace": True,
             "download_workers": 10,
-            "convert_workers": 5
+            "convert_workers": 4
         }
         self.config_path=config_path
         if not os.path.exists(config_path):
