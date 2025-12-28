@@ -44,8 +44,8 @@ FROM base as dependencies
 
 # 升级pip并安装Python依赖
 
-RUN pip install –no-cache-dir –upgrade pip &&   
-pip install –no-cache-dir -r requirements.txt &&   
+RUN pip install –no-cache-dir –upgrade pip &&   \
+pip install –no-cache-dir -r requirements.txt &&   \
 pip install –no-cache-dir cairosvg
 
 # 第三阶段: 最终镜像
