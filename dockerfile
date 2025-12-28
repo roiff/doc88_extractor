@@ -8,9 +8,12 @@ FROM python:3.11-slim as base
 COPY . /app
 WORKDIR /app
 
-# 安装系统依赖、Java和中文字体
+RUN echo 'APT::Update::Post-Invoke-Success {"touch /var/lib/apt/periodic/update-success-stamp 2>/dev/null || true";};' > /etc/apt/apt.conf.d/00_disable-success-stamp
 
-RUN apt-get update && apt-get install -y \
+
+# 安装系统依赖、Java和中文字体
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     wget \
     curl \
     git \
@@ -28,9 +31,10 @@ RUN apt-get update && apt-get install -y \
     fonts-noto-cjk \
     fonts-noto-cjk-extra \
     fonts-wqy-microhei \
-    fonts-wqy-zenhei \
-    && fc-cache -fv \
-    && rm -rf /var/lib/apt/lists/*
+    fonts-wqy-zenhei && \
+    fc-cache -fv && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /var/cache/apt/archives/*.deb
 
 # 设置Java环境变量
 
