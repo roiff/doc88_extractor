@@ -433,6 +433,15 @@
             min-height: 100%;
         }
         
+        /* 移动端PDF自适应样式 */
+        @media (max-width: 768px) {
+            .pdf-viewer-content iframe {
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow-x: hidden !important;
+            }
+        }
+        
         .pdf-viewer-empty {
             display: flex;
             align-items: center;
@@ -578,6 +587,7 @@
                 overflow-x: hidden !important;
                 overflow-y: auto !important;
                 display: block;
+                background: white;
             }
             
             .pdf-viewer-actions {
@@ -617,6 +627,7 @@
                 overflow-y: auto !important;
                 display: block;
                 min-height: 100vh;
+                background: white;
             }
         }
         
@@ -650,7 +661,7 @@
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <button class="sidebar-close" id="sidebarClose">×</button>
-            <h1>📄 DOC88 文档提取工具</h1>
+            <h1>📄 文档提取工具</h1>
             <p>历史文件列表</p>
         </div>
         
@@ -837,38 +848,15 @@
                    (window.innerWidth <= 768);
         }
         
-        // 获取PDF URL（移动端添加缩放参数）
+        // 获取PDF URL（移动端添加自适应参数）
         function getPdfUrl(filename) {
             const baseUrl = `/api/file/${encodeURIComponent(filename)}`;
             if (isMobileDevice()) {
-                // 移动端：使用FitH参数让PDF水平适应屏幕
-                // 注意：实际的缩放主要通过CSS transform实现，这里只是辅助
+                // 移动端：使用FitH参数让PDF水平适应屏幕宽度
+                // 这样PDF会自动调整宽度以适应屏幕，无需手动缩放
                 return baseUrl + '#view=FitH';
             }
             return baseUrl;
-        }
-        
-        // 获取移动端PDF缩放比例
-        function getMobilePdfScale() {
-            if (!isMobileDevice()) return 1;
-            const screenWidth = window.innerWidth;
-            // 根据屏幕宽度动态计算缩放比例
-            // PDF标准宽度通常为A4纸宽度（约800px），我们想让它完整显示在屏幕内
-            // 留出一些边距，所以使用更小的缩放比例
-            if (screenWidth <= 375) {
-                // iPhone SE等小屏幕
-                return 0.45;
-            } else if (screenWidth <= 414) {
-                // iPhone 6/7/8 Plus等
-                return 0.5;
-            } else if (screenWidth <= 480) {
-                // 小屏幕手机
-                return 0.55;
-            } else if (screenWidth <= 768) {
-                // 平板竖屏
-                return 0.7;
-            }
-            return 0.8; // 较大屏幕
         }
         
         // 打开PDF预览
@@ -879,40 +867,28 @@
             
             const pdfUrl = getPdfUrl(filename);
             
-            // 创建容器用于移动端缩放
-            const container = document.createElement('div');
-            container.className = 'pdf-iframe-container';
-            
+            // 创建iframe，移动端和桌面端都使用相同方式
             const iframe = document.createElement('iframe');
             iframe.src = pdfUrl;
+            iframe.style.width = '100%';
             iframe.style.border = 'none';
+            iframe.style.background = 'white';
             iframe.setAttribute('scrolling', 'auto');
             iframe.setAttribute('allowfullscreen', 'true');
             
-            // 移动端特殊处理
             if (isMobileDevice()) {
-                const scale = getMobilePdfScale();
-                // 设置容器样式用于缩放
-                container.style.width = `${100 / scale}%`;
-                container.style.transform = `scale(${scale})`;
-                container.style.transformOrigin = 'top left';
-                container.style.overflow = 'visible';
-                container.style.position = 'relative';
-                
-                // iframe设置为足够大的高度以显示所有页面
-                // 使用一个很大的高度值，确保能显示所有PDF页面
-                iframe.style.width = '100%';
-                iframe.style.height = '50000px'; // 足够大的高度以显示所有页面
-                iframe.style.minHeight = `${window.innerHeight / scale}px`;
+                // 移动端：设置足够大的高度以显示所有页面
+                // PDF会通过#view=FitH参数自动适应屏幕宽度
+                iframe.style.height = '100000px'; // 足够大的高度以显示所有页面
+                iframe.style.minHeight = `${window.innerHeight}px`;
             } else {
-                iframe.style.width = '100%';
+                // 桌面端：使用固定高度
                 iframe.style.height = '100%';
                 iframe.style.minHeight = '600px';
             }
             
-            container.appendChild(iframe);
             pdfViewerContent.innerHTML = '';
-            pdfViewerContent.appendChild(container);
+            pdfViewerContent.appendChild(iframe);
             pdfViewer.classList.add('active');
             closeSidebar();
             
@@ -943,38 +919,25 @@
             isFullscreen = true;
             const pdfUrl = getPdfUrl(currentPdfFile);
             
-            // 创建容器用于移动端缩放
-            const container = document.createElement('div');
-            container.className = 'pdf-iframe-container';
-            
             const iframe = document.createElement('iframe');
             iframe.src = pdfUrl;
+            iframe.style.width = '100%';
             iframe.style.border = 'none';
+            iframe.style.background = 'white';
             iframe.setAttribute('scrolling', 'auto');
             iframe.setAttribute('allowfullscreen', 'true');
             
-            // 移动端特殊处理
             if (isMobileDevice()) {
-                const scale = getMobilePdfScale();
-                // 设置容器样式用于缩放
-                container.style.width = `${100 / scale}%`;
-                container.style.transform = `scale(${scale})`;
-                container.style.transformOrigin = 'top left';
-                container.style.overflow = 'visible';
-                container.style.position = 'relative';
-                
-                // iframe设置为足够大的高度以显示所有页面
-                iframe.style.width = '100%';
-                iframe.style.height = '50000px'; // 足够大的高度以显示所有页面
-                iframe.style.minHeight = `${window.innerHeight / scale}px`;
+                // 移动端：设置足够大的高度以显示所有页面
+                iframe.style.height = '100000px';
+                iframe.style.minHeight = `${window.innerHeight}px`;
             } else {
-                iframe.style.width = '100%';
+                // 桌面端：使用100%高度
                 iframe.style.height = '100%';
             }
             
-            container.appendChild(iframe);
             pdfFullscreenContent.innerHTML = '';
-            pdfFullscreenContent.appendChild(container);
+            pdfFullscreenContent.appendChild(iframe);
             pdfFullscreen.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
