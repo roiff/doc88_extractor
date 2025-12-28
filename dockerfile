@@ -9,14 +9,15 @@ COPY . /app
 WORKDIR /app
 
 # 安装系统依赖、Java和中文字体
-RUN apt-get update || true && \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     openjdk-17-jdk \
     fontconfig \
     fonts-noto-cjk \
     fonts-noto-cjk-extra \
     fonts-wqy-microhei \
     fonts-wqy-zenhei && \
-    fc-cache -fv && \
+    fc-cache -fv
 # 设置Java环境变量
 
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
