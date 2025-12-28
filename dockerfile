@@ -10,9 +10,9 @@ WORKDIR /app
 
 RUN echo 'APT::Update::Post-Invoke-Success {"touch /var/lib/apt/periodic/update-success-stamp 2>/dev/null || true";};' > /etc/apt/apt.conf.d/00_disable-success-stamp
 
-
+USER root
 # 安装系统依赖、Java和中文字体
-RUN apt-get update && \
+RUN apt-get update || true && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     wget \
     curl \
