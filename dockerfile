@@ -9,8 +9,7 @@ COPY . /app
 WORKDIR /app
 
 # 安装系统依赖、Java和中文字体
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+RUN apt-get install -y --no-install-recommends \
     openjdk-17-jdk \
     fontconfig \
     fonts-noto-cjk \
