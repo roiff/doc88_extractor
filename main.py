@@ -45,20 +45,48 @@ from get_more import *
 from utils import *
 from updater import *
 
+# 全局debug变量，默认为False
+debug = False
+
 class get_cfg:
-    def __init__(self, url: str) -> None:
+    def __init__(self, url: str, interactive: bool = True, is_cdn_fallback: bool = False) -> None:
         if url.find("doc88.com/p-") == -1 and url.find("doc88.piglin.eu.org/p-") == -1:
             raise Exception("Invalid URL!")
         self.url = url
         self.content = ""
-        self.data = ""
+        # 只有在非递归调用时才重置data，避免覆盖已设置的数据
+        if not is_cdn_fallback:
+            self.data = ""
         self.sta = 0
-        if not self.get_main():
-            if choose("Do you want to use CDN?(Y/n): "):
-                self.__init__(
-                    "https://doc88.piglin.eu.org" + url[url.find("doc88.com/") + 9 :]
-                )
-                return None
+        self.interactive = interactive
+        try:
+            if not self.get_main():
+                # 非交互模式下自动尝试CDN
+                if not interactive:
+                    if is_cdn_fallback:
+                        # CDN也失败了，抛出异常
+                        raise Exception("无法获取文档配置数据，原始URL和CDN都失败，可能是网络问题或文档已被删除")
+                    cdn_url = "https://doc88.piglin.eu.org" + url[url.find("doc88.com/") + 9 :]
+                    # 递归调用前不重置data，让CDN的结果覆盖
+                    self.__init__(cdn_url, interactive=False, is_cdn_fallback=True)
+                    return None
+                elif choose("Do you want to use CDN?(Y/n): "):
+                    self.__init__(
+                        "https://doc88.piglin.eu.org" + url[url.find("doc88.com/") + 9 :],
+                        interactive=interactive,
+                        is_cdn_fallback=True
+                    )
+                    return None
+                else:
+                    raise Exception("无法获取文档配置数据，可能是网络问题或文档已被删除")
+        except Exception:
+            # 如果发生异常，确保data被重置（除非是递归调用）
+            if not is_cdn_fallback:
+                self.data = ""
+            raise
+        # 如果get_main返回True，检查data是否真的被设置了
+        if not self.data or self.data.strip() == "":
+            raise Exception("获取文档配置数据失败：数据为空，可能是页面格式已更改或网络问题")
         return None
 
     def req(self):
@@ -69,16 +97,27 @@ class get_cfg:
         self.content = request.text
 
     def get_main(self):
-        self.req()
-        data = re.search(r"m_main.init\(\".*\"\);", self.content)
-        if data == None:
-            if re.search("网络环境安全验证", self.content):
-                print("WAF detected!")
-                return False
-            raise Exception("Config data not found! May be deleted?")
-        c = data.span()
-        self.data = self.content[c[0] + 13 : c[1] - 3]
-        return True
+        try:
+            self.req()
+            data = re.search(r"m_main.init\(\".*\"\);", self.content)
+            if data == None:
+                if re.search("网络环境安全验证", self.content):
+                    print("WAF detected!")
+                    return False
+                raise Exception("Config data not found! May be deleted?")
+            c = data.span()
+            extracted_data = self.content[c[0] + 13 : c[1] - 3]
+            # 检查提取的数据是否为空
+            if not extracted_data or extracted_data.strip() == "":
+                raise Exception("提取的配置数据为空，可能是页面格式已更改")
+            self.data = extracted_data
+            return True
+        except Exception as e:
+            # 如果是我们主动抛出的异常，直接抛出
+            if "Config data not found" in str(e) or "提取的配置数据为空" in str(e) or "404 Not found" in str(e):
+                raise
+            # 其他异常（如网络错误）也抛出
+            raise Exception(f"获取文档配置时出错: {str(e)}")
 
 
 def append_pdf(pdf: PdfWriter, file: str):
@@ -87,7 +126,7 @@ def append_pdf(pdf: PdfWriter, file: str):
 
 
 class init:
-    def __init__(self, config: dict) -> None:
+    def __init__(self, config: dict, interactive: bool = True) -> None:
         cfg2.dir_path = cfg2.o_dir_path + config["p_code"] + "/"
         cfg2.swf_path = cfg2.dir_path + cfg2.o_swf_path
         cfg2.svg_path = cfg2.dir_path + cfg2.o_svg_path
@@ -95,10 +134,12 @@ class init:
         try:
             os.makedirs(ospath(cfg2.dir_path))
         except FileExistsError:
-            if choose("exists"):
-                pass
-            else:
-                exit()
+            if interactive:
+                if choose("exists"):
+                    pass
+                else:
+                    exit()
+            # 非交互模式下，目录已存在时直接继续
         if not os.path.exists(ospath(f"{cfg2.dir_path}index.json")):
             write_file(
                 bytes(json.dumps(config), encoding="utf-8"),
@@ -112,7 +153,11 @@ class init:
             print("")
 
 
-def main(encoded_str, more=False):
+def main(encoded_str, more=False, interactive=True, debug_mode=None):
+    # 如果没有传递debug_mode，使用全局debug变量
+    if debug_mode is None:
+        debug_mode = debug
+    
     try:
         config = json.loads(decode(encoded_str))
     except json.decoder.JSONDecodeError:
@@ -121,10 +166,21 @@ def main(encoded_str, more=False):
     except (ValueError, UnicodeDecodeError):
         print("Can't read! Maybe keys were changed?")
         return False
-    init(config)
+    init(config, interactive=interactive)
     cfg = gen_cfg(config)
     if os.path.exists(ospath(f"{cfg2.dir_path}index.json")):
         cfg = gen_cfg(json.loads(read_file(f"{cfg2.dir_path}index.json")))
+    
+    # 检查是否已存在PDF文件
+    pdf_name = cfg2.o_dir_path + special_path(cfg.p_name) + ".pdf"
+    if os.path.exists(ospath(pdf_name)):
+        if interactive:
+            print(f"文档名：{cfg.p_name}")
+            print(f"文档 ID：{cfg.p_code}")
+            print("该文档已存在，无需重新转换！")
+            print("文件路径: " + pdf_name)
+        return True
+    
     print(f"文档名：{cfg.p_name}")
     print(f"文档 ID：{cfg.p_code}")
     print(f"上传日期：{cfg.p_date}")
@@ -134,11 +190,13 @@ def main(encoded_str, more=False):
         print(f"可预览页数：{cfg.p_countinfo}")
         print(f"可直接获取页数：{cfg.p_count}")
         print(f"可能有额外页面（需扫描）！")
-    if not choose("开始提取？ (Y/n): "):
+    if interactive and not choose("开始提取？ (Y/n): "):
         return False
     if cfg.p_download == "1":
         print("该文档为免费文档，可直接下载！")
-        if choose("down"):
+        if interactive and not choose("down"):
+            print("Continuing...")
+        else:
             try:
                 if config["if_zip"] == 0:
                     doc_format = str.lower(cfg.p_doc_format)
@@ -156,10 +214,13 @@ def main(encoded_str, more=False):
             except Exception as err:
                 print("Downlaod error: " + str(err))
                 logw("Downlaod error: " + str(err))
-        else:
-            print("Continuing...")
+                if not interactive:
+                    return False
     if more:
-        if choose("即将通过扫描获取页面，是否继续（否则正常下载）？ (Y/n): "):
+        if interactive and not choose("即将通过扫描获取页面，是否继续（否则正常下载）？ (Y/n): "):
+            print("普通下载模式...")
+            more = False
+        else:
             print("尝试通过扫描获取页面...")
             newpageids = []
             cfg.p_count = 0
@@ -179,13 +240,10 @@ def main(encoded_str, more=False):
             print(f"成功扫描页数：{cfg.p_count}")
             del newpageids
             time.sleep(2)
-        else:
-            print("普通下载模式...")
-            more = False
     try:
         if not more:
             get_swf(cfg)
-        if not debug:
+        if not debug_mode:
             convert(cfg)
             del cfg
         return True
@@ -394,6 +452,13 @@ def convert(cfg: gen_cfg):
     print(
         "Tip: 在 Edge 中查看文档可能会无法正常显示文本，但您也可以使用其他阅读器，例如 Chrome。"
     )
+    # 转换完成后自动清理缓存
+    if cfg2.clean:
+        try:
+            clean(cfg2)
+        except Exception as e:
+            print(f"清理缓存时出错: {e}")
+            logw(f"清理缓存时出错: {e}")
 
 
 def clean(cfg2):
@@ -460,7 +525,6 @@ if __name__ == "__main__":
     a = sys.argv
     user = mode()
     if "--debug" in a:
-        global debug
         debug = True
     else:
         debug = False
